@@ -64,18 +64,24 @@ function gitignoreGlobs(root: string): string[] {
 }
 
 function configIgnoredGlobs(root: string): string[] {
-    const configFilesExclude = Object.assign(
-        [],
+    const configFilesExcluded: {
+        [key: string]: boolean;
+    } = Object.assign(
+        {},
         vscode.workspace.getConfiguration('advancedNewFile').get('exclude'),
-        vscode.workspace.getConfiguration(
-            'files.exclude',
-            vscode.Uri.file(root)
-        )
+        (
+            vscode.workspace
+                .getConfiguration('advancedNewFile')
+                .get('useFilesExclude', true)
+        ) ?
+            vscode.workspace
+                .getConfiguration('files', vscode.Uri.file(root))
+                .get('exclude', {})
+        :   {}
     );
-    const configIgnored = Object.keys(configFilesExclude).filter(
-        (key) => configFilesExclude[key] === true
+    const configIgnored = Object.keys(configFilesExcluded).filter(
+        (key) => configFilesExcluded[key] === true
     );
-
     return gitignoreToGlob(configIgnored.join('\n'), {string: true});
 }
 
