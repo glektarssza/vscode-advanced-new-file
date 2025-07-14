@@ -85,6 +85,52 @@ function configIgnoredGlobs(root: string): string[] {
     return gitignoreToGlob(configIgnored.join('\n'), {string: true});
 }
 
+function isDirectory(p: string): boolean {
+    return fs.existsSync(p) && fs.lstatSync(p).isDirectory();
+}
+
+function readSymlink(p: string): string | null {
+    if (!isSymlink(p)) {
+        return null;
+    }
+    return fs.readlinkSync(p);
+}
+
+function readSymlinkAbsolute(p: string): string | null {
+    const sp = readSymlink(p);
+    if (!sp) {
+        return null;
+    }
+    return path.resolve(path.dirname(p), sp);
+}
+
+function isSymlink(p: string): boolean {
+    return fs.existsSync(p) && fs.lstatSync(p).isSymbolicLink();
+}
+
+function isValidSymlink(p: string): boolean {
+    const sp = readSymlinkAbsolute(p);
+    if (!sp) {
+        return false;
+    }
+    return fs.existsSync(sp);
+}
+
+function isDirectorySymlink(p: string): boolean {
+    if (!isValidSymlink(p)) {
+        return false;
+    }
+    const sp = readSymlinkAbsolute(p);
+    if (!sp) {
+        return false;
+    }
+    return fs.lstatSync(sp).isDirectory();
+}
+
+function isDirectoryOrDirectorySymlink(p: string): boolean {
+    return isDirectory(p) || isDirectorySymlink(p);
+}
+
 function directoriesSync(root: string): FSLocation[] {
     const ignore: string[] = [];
     if (
@@ -96,14 +142,18 @@ function directoriesSync(root: string): FSLocation[] {
     }
     ignore.push(...configIgnoredGlobs(root));
 
-    const results = globSync('**', {cwd: root, ignore: ignore.map(invertGlob)})
+    const results = globSync('**', {
+        cwd: root,
+        ignore: ignore.map(invertGlob),
+        symlinks: true
+    })
         .map((f): FSLocation => {
             return {
                 relative: path.join(path.sep, f),
                 absolute: path.join(root, f)
             };
         })
-        .filter((f) => fs.statSync(f.absolute).isDirectory())
+        .filter((f) => isDirectoryOrDirectorySymlink(f.absolute))
         .map((f) => f);
 
     return results;
