@@ -127,10 +127,6 @@ function isDirectorySymlink(p: string): boolean {
     return fs.lstatSync(sp).isDirectory();
 }
 
-function isDirectoryOrDirectorySymlink(p: string): boolean {
-    return isDirectory(p) || isDirectorySymlink(p);
-}
-
 function directoriesSync(root: string): FSLocation[] {
     const ignore: string[] = [];
     if (
@@ -145,7 +141,9 @@ function directoriesSync(root: string): FSLocation[] {
     const results = globSync('**', {
         cwd: root,
         ignore: ignore.map(invertGlob),
-        symlinks: true
+        symlinks: vscode.workspace
+            .getConfiguration('advancedNewFile')
+            .get('showSymlinks', true)
     })
         .map((f): FSLocation => {
             return {
@@ -153,9 +151,14 @@ function directoriesSync(root: string): FSLocation[] {
                 absolute: path.join(root, f)
             };
         })
-        .filter((f) => isDirectoryOrDirectorySymlink(f.absolute))
-        .map((f) => f);
-
+        .filter(
+            (f) =>
+                isDirectory(f.absolute) ||
+                (isDirectorySymlink(f.absolute) &&
+                    vscode.workspace
+                        .getConfiguration('advancedNewFile')
+                        .get('showSymlinks', true))
+        );
     return results;
 }
 

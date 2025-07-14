@@ -80,6 +80,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to use the values from `files.exclude` when deciding which folders to ignore."
+                },
+                "advancedNewFile.showSymlinks": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show symbolic links when listing direcotries."
                 }
             }
         }
