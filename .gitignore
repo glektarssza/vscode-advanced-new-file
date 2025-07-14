@@ -50,3 +50,6 @@ node_modules/
 ## TypeScript ##
 out/
 *.vsix
+
+# Test Symlinks #
+*-symlink

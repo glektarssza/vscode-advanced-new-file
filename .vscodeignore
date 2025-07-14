@@ -9,3 +9,4 @@ types/
 tsconfig.json
 vsc-extension-quickstart.md
 .nvmrc
+*-symlink
